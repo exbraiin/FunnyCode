@@ -87,7 +87,7 @@ class TextOver {
 		this.degs = (Math.random() - 0.5) * 20;
 		this.moveDist = Math.random() * 10;
 		this.moveDirX = (Math.random() - 0.5) * 2;
-		this.moveDirY = (Math.random() - 0.5) * 2;
+		this.moveDirY = (Math.random() / 2 + 0.5) * -5;
 		const rColor = Color.randomSaturatedColor();
 		this.color = rColor.desaturated(0.8).toHexCode();
 		this.shadowColor = rColor.toHexCode();
