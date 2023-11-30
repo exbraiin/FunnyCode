@@ -1,6 +1,6 @@
 import * as vscode from 'vscode';
 
-var timeout: NodeJS.Timeout;
+var timeout: NodeJS.Timeout | null;
 var textOvers: TextOver[] = [];
 var fontFamily: string = 'Verdana';
 
@@ -11,12 +11,25 @@ export function activate(context: vscode.ExtensionContext) {
 
 	let onTextChangeDisposable = vscode.workspace.onDidChangeTextDocument(onTextChanged);
 	context.subscriptions.push(onTextChangeDisposable);
-	timeout = setInterval(() => textOvers = textOvers.filter((e, i) => e.update(i, 30)), 30);
 }
 
 // This method is called when your extension is deactivated
 export function deactivate() {
+	clearTimeout();
+}
+
+function startTimeout() {
+	if (timeout) return;
+	timeout = setInterval(() => {
+		textOvers = textOvers.filter((e, i) => e.update(i, 30));
+		if (textOvers.length == 0) clearTimeout();
+	}, 30);
+}
+
+function clearTimeout(): void {
+	if (!timeout) return;
 	clearInterval(timeout);
+	timeout = null;
 }
 
 function onTextChanged(e: vscode.TextDocumentChangeEvent): void {
@@ -44,6 +57,7 @@ function onTextChanged(e: vscode.TextDocumentChangeEvent): void {
 	const over = char === '' ? 0 : 1;
 	const pos = new vscode.Position(cursor.line, cursor.character + over);
 	textOvers.push(new TextOver(editor, pos, text));
+	startTimeout();
 }
 
 

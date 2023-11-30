@@ -34,14 +34,28 @@ function activate(context) {
     fontFamily = config.fontFamily;
     let onTextChangeDisposable = vscode.workspace.onDidChangeTextDocument(onTextChanged);
     context.subscriptions.push(onTextChangeDisposable);
-    timeout = setInterval(() => textOvers = textOvers.filter((e, i) => e.update(i, 30)), 30);
 }
 exports.activate = activate;
 // This method is called when your extension is deactivated
 function deactivate() {
-    clearInterval(timeout);
+    clearTimeout();
 }
 exports.deactivate = deactivate;
+function startTimeout() {
+    if (timeout)
+        return;
+    timeout = setInterval(() => {
+        textOvers = textOvers.filter((e, i) => e.update(i, 30));
+        if (textOvers.length == 0)
+            clearTimeout();
+    }, 30);
+}
+function clearTimeout() {
+    if (!timeout)
+        return;
+    clearInterval(timeout);
+    timeout = null;
+}
 function onTextChanged(e) {
     const editor = vscode.window.activeTextEditor;
     if (!editor)
@@ -71,6 +85,7 @@ function onTextChanged(e) {
     const over = char === '' ? 0 : 1;
     const pos = new vscode.Position(cursor.line, cursor.character + over);
     textOvers.push(new TextOver(editor, pos, text));
+    startTimeout();
 }
 class TextOver {
     totalTimeMs = 400;
