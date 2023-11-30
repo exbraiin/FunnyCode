@@ -66,17 +66,19 @@ function onTextChanged(e) {
     const cursor = editor.selection.active;
     if (!cursor)
         return;
-    const spaces = parseInt(editor.options.tabSize?.toString() ?? '0');
-    const tabs = editor.options.insertSpaces ? ' '.repeat(spaces) : '\t'.repeat(spaces);
+    const tabSize = editor.options.tabSize;
+    const tabSpace = editor.options.insertSpaces ?? false;
     function textToString() {
         if (char === '')
             return 'DELETE';
         if (char === ' ')
             return 'SPACE';
-        if (char === tabs)
-            return 'TAB';
         if (char.includes('\n'))
             return 'ENTER';
+        const spaces = !tabSize ? 0 : parseInt(tabSize.toString());
+        const tabs = (tabSpace ? ' ' : '\t').repeat(spaces);
+        if (char === tabs)
+            return 'TAB';
         if (char.length > 1)
             return 'CTRL+V';
         return char.toUpperCase();
