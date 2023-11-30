@@ -24,19 +24,17 @@ var __importStar = (this && this.__importStar) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.deactivate = exports.activate = void 0;
-// The module 'vscode' contains the VS Code extensibility API
-// Import the module and reference it with the alias vscode in your code below
 const vscode = __importStar(require("vscode"));
 var timeout;
+var textOvers = [];
+var fontFamily = 'Verdana';
 // This method is called when your extension is activated
-// Your extension is activated the very first time the command is executed
 function activate(context) {
+    const config = vscode.workspace.getConfiguration('editor');
+    fontFamily = config.fontFamily;
     let onTextChangeDisposable = vscode.workspace.onDidChangeTextDocument(onTextChanged);
     context.subscriptions.push(onTextChangeDisposable);
-    timeout = setInterval(() => {
-        textOvers.forEach((e, i) => e.update(i, 30));
-        textOvers = textOvers.filter((e) => !e.isComplete());
-    }, 30);
+    timeout = setInterval(() => textOvers = textOvers.filter((e, i) => e.update(i, 30)), 30);
 }
 exports.activate = activate;
 // This method is called when your extension is deactivated
@@ -44,19 +42,21 @@ function deactivate() {
     clearInterval(timeout);
 }
 exports.deactivate = deactivate;
-let textOvers = [];
 function onTextChanged(e) {
     const editor = vscode.window.activeTextEditor;
     if (!editor)
         return;
     if (e.contentChanges.length == 0)
-        return '';
+        return;
     const char = e.contentChanges[0].text;
+    const cursor = editor.selection.active;
+    if (!cursor)
+        return;
     const spaces = parseInt(editor.options.tabSize?.toString() ?? '0');
     const tabs = editor.options.insertSpaces ? ' '.repeat(spaces) : '\t'.repeat(spaces);
     function textToString() {
         if (char === '')
-            return 'BACKSPACE';
+            return 'DELETE';
         if (char === ' ')
             return 'SPACE';
         if (char === tabs)
@@ -64,13 +64,10 @@ function onTextChanged(e) {
         if (char.includes('\n'))
             return 'ENTER';
         if (char.length > 1)
-            return 'PASTE';
+            return 'CTRL+V';
         return char.toUpperCase();
     }
     const text = textToString();
-    const cursor = editor.selection.active;
-    if (!cursor)
-        return;
     const over = char === '' ? 0 : 1;
     const pos = new vscode.Position(cursor.line, cursor.character + over);
     textOvers.push(new TextOver(editor, pos, text));
@@ -79,6 +76,7 @@ class TextOver {
     totalTimeMs = 400;
     text;
     color;
+    shadowColor;
     offx;
     offy;
     degs;
@@ -91,8 +89,6 @@ class TextOver {
     editor;
     decoration;
     constructor(editor, pos, text) {
-        const colors = ['#fff7ae', '#fccb7d', '#f0bcbc', '#e7bae4', '#c9a7d8', '#9d9bd6', '#9dc0c9', '#abd7b5'];
-        const idx = Math.floor(Math.random() * (colors.length - 1));
         this.text = text;
         this.editor = editor;
         this.fontSize = 24;
@@ -102,7 +98,9 @@ class TextOver {
         this.moveDist = Math.random() * 10;
         this.moveDirX = (Math.random() - 0.5) * 2;
         this.moveDirY = (Math.random() - 0.5) * 2;
-        this.color = colors[idx];
+        const rColor = Color.randomSaturatedColor();
+        this.color = rColor.desaturated(0.8).toHexCode();
+        this.shadowColor = rColor.toHexCode();
         this.ranges = [new vscode.Range(pos, pos)];
         this.decoration = null;
     }
@@ -113,11 +111,12 @@ class TextOver {
         this.timeMs -= delta;
         if (this.timeMs < 0) {
             this.decoration?.dispose();
-            return;
+            return false;
         }
         this.decoration?.dispose();
         this.decoration = this.createDecoration(index + 1);
         this.editor.setDecorations(this.decoration, this.ranges);
+        return true;
     }
     createDecoration(index) {
         const progressInv = this.timeMs / this.totalTimeMs;
@@ -139,13 +138,13 @@ class TextOver {
 
 			color: ${this.color};
 			text-align: center;
-			text-shadow: 2px 2px 0px white;
-			-webkit-text-stroke: 1px #444;
-			text-stroke: 1px #444;
+			text-shadow: 0px 0px 4px ${this.shadowColor};
+			
+			-webkit-text-stroke: 1px white;
+			text-stroke: 1px white;
 			font-size: ${this.fontSize}px;
 			font-weight: bold;
-			font-family: Verdana;
-			letter-spacing: 0px;`;
+			font-family: ${fontFamily}, Verdana;`;
         return vscode.window.createTextEditorDecorationType({
             after: {
                 contentText: this.text,
@@ -154,6 +153,50 @@ class TextOver {
             textDecoration: `none; position: relative; `,
             rangeBehavior: vscode.DecorationRangeBehavior.ClosedClosed,
         });
+    }
+}
+class Color {
+    r;
+    g;
+    b;
+    constructor(r, g, b) {
+        this.r = r;
+        this.g = g;
+        this.b = b;
+    }
+    static randomSaturatedColor() {
+        var r = Math.floor(Math.random() * 255);
+        var g = Math.floor(Math.random() * 255);
+        var b = Math.floor(Math.random() * 255);
+        if (r < g && r < b) {
+            r = 0;
+            if (g > b)
+                g = 255;
+        }
+        else if (g < b && g < r) {
+            g = 0;
+            if (r > b)
+                r = 255;
+        }
+        else {
+            b = 0;
+            if (r > g)
+                r = 255;
+        }
+        return new Color(r, g, b);
+    }
+    desaturated(f) {
+        const l = 0.3 * this.r + 0.6 * this.g + 0.1 * this.b;
+        const r = this.r + f * (l - this.r);
+        const g = this.g + f * (l - this.g);
+        const b = this.b + f * (l - this.b);
+        return new Color(r, g, b);
+    }
+    toHexCode() {
+        const hr = Math.floor(this.r).toString(16).padStart(2, '0');
+        const hg = Math.floor(this.g).toString(16).padStart(2, '0');
+        const hb = Math.floor(this.b).toString(16).padStart(2, '0');
+        return `#${hr}${hg}${hb}`;
     }
 }
 class CubicCurve {
