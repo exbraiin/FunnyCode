@@ -15,7 +15,27 @@
     "onStartupFinished"
   ],
   "main": "./out/extension.js",
-  "contributes": {},
+  "contributes": {
+    "commands": [
+      {
+        "command": "funnycode.toggleEnable",
+        "title": "Toggle Funny Code"
+      }
+    ],
+    "configuration": [
+      {
+        "title": "General",
+        "properties": {
+          "funnycode.enabled": {
+            "order": 0,
+            "type": "boolean",
+            "default": true,
+            "description": "Enables funny code!"
+          }
+        }
+      }
+    ]
+  },
   "scripts": {
     "vscode:prepublish": "npm run compile",
     "compile": "tsc -p ./",
