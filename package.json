@@ -4,12 +4,15 @@
   "description": "Adds a little decoration above the written text.",
   "publisher": "ExBrain",
   "icon": "images/icon.jpg",
-  "version": "1.0.0",
+  "version": "1.0.1",
+  "repository": {
+    "url": "https://github.com/exbraiin/FunnyCode"
+  },
   "engines": {
     "vscode": "^1.84.0"
   },
   "categories": [
-    "Other"
+    "Themes"
   ],
   "activationEvents": [
     "onStartupFinished"

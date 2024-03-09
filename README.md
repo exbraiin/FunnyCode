@@ -23,10 +23,10 @@ A command can also be executed in order to change this setting. Search for "Togg
 
 ## How to install
 
-You can download the [VSIX](funnycode-1.0.0.vsix) file and install it through the extensions panel.<br>
+1. You can download the [VSIX](funnycode-1.0.1.vsix) file and install it through the extensions panel.<br>
 Press the options button ("...") and click "Install from VSIX".
 
-_I don't pretend to publish this extension to the vscode market._
+2. You can also check the [Marketplace](https://marketplace.visualstudio.com/items?itemName=ExBrain.funnycode) for this extension
 
 ## Other
 
