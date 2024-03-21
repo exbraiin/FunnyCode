@@ -2,36 +2,46 @@ import * as vscode from 'vscode';
 import { ColorUtils } from './utils/color';
 import { CubicCurve } from './utils/cubic_curve';
 
-var enabled: boolean = false;
+var configCursorEnabled: boolean = false;
+var configExtensionEnabled: boolean = false;
 var timeout: NodeJS.Timeout | null;
-var textOvers: TextOver[] = [];
+var decorations: AnimatedDecor[] = [];
 var fontFamily: string = 'Verdana';
 
 // This method is called when your extension is activated
 export function activate(context: vscode.ExtensionContext) {
-	function isFunnyCodeEnabled(): boolean {
-		const config = vscode.workspace.getConfiguration("funnycode");
-		const inspect = config.inspect("enabled");
-		return !!(inspect?.globalValue ?? inspect?.defaultValue ?? true);
+	const extName = 'funnycode';
+	const cfgExtension = 'enabled';
+	const cfgCursor = 'cursor';
+
+	function isFunnyCodeConfigEnabled(config: string): boolean {
+		const cfg = vscode.workspace.getConfiguration(extName);
+		const inspect = cfg.inspect(config);
+		return !!(inspect?.globalValue ?? inspect?.defaultValue ?? false);
 	}
 
 	function toogleFunnyCode() {
-		const value = isFunnyCodeEnabled();
-		const config = vscode.workspace.getConfiguration("funnycode");
-		config.update("enabled", !value, vscode.ConfigurationTarget.Global);
-		vscode.window.showInformationMessage(value ? "Funny Code Disabled!" : "Funny Code Enabled!");
+		const value = isFunnyCodeConfigEnabled(cfgExtension);
+		const config = vscode.workspace.getConfiguration(extName);
+		config.update(cfgExtension, !value, vscode.ConfigurationTarget.Global);
+		vscode.window.showInformationMessage(value ? 'Funny Code Disabled!' : 'Funny Code Enabled!');
 	}
 
 	function onFunnyCodeEnabledChanged(event: vscode.ConfigurationChangeEvent) {
-		if (!event.affectsConfiguration("funnycode.enabled")) return;
-		enabled = isFunnyCodeEnabled();
+		if (event.affectsConfiguration(`${extName}.${cfgExtension}`)) {
+			configExtensionEnabled = isFunnyCodeConfigEnabled(cfgExtension);
+		}
+		if (event.affectsConfiguration(`${extName}.${cfgCursor}`)) {
+			configCursorEnabled = isFunnyCodeConfigEnabled(cfgCursor);
+		}
 	}
 
 	const config = vscode.workspace.getConfiguration('editor');
 	fontFamily = config.fontFamily;
-	enabled = isFunnyCodeEnabled();
+	configExtensionEnabled = isFunnyCodeConfigEnabled(cfgExtension);
+	configCursorEnabled = isFunnyCodeConfigEnabled(cfgCursor);
 
-	const toogleCommand = vscode.commands.registerCommand("funnycode.toggleEnable", toogleFunnyCode);
+	const toogleCommand = vscode.commands.registerCommand('funnycode.toggleEnable', toogleFunnyCode);
 	context.subscriptions.push(toogleCommand);
 
 	const configSub = vscode.workspace.onDidChangeConfiguration(onFunnyCodeEnabledChanged);
@@ -43,15 +53,14 @@ export function activate(context: vscode.ExtensionContext) {
 
 // This method is called when your extension is deactivated
 export function deactivate() {
-	const c = new vscode.Color(1, 1, 1, 1);
 	clearTimeout();
 }
 
 function startTimeout() {
 	if (timeout) return;
 	timeout = setInterval(() => {
-		textOvers = textOvers.filter((e, i) => e.update(i, 30));
-		if (textOvers.length == 0) clearTimeout();
+		decorations = decorations.filter((e, i) => e.update(i, 30));
+		if (decorations.length == 0) clearTimeout();
 	}, 30);
 }
 
@@ -75,7 +84,7 @@ function textToRender(text: string, editor: vscode.TextEditor) {
 }
 
 function onTextChanged(e: vscode.TextDocumentChangeEvent): void {
-	if (!enabled) return;
+	if (!configExtensionEnabled) return;
 	const editor = vscode.window.activeTextEditor;
 	if (!editor) return;
 
@@ -84,16 +93,19 @@ function onTextChanged(e: vscode.TextDocumentChangeEvent): void {
 	const cursor = editor.selection.active;
 	if (!cursor) return;
 
-
-
 	const data = textToRender(text, editor);
 	const over = text === '' ? 0 : 1;
 	const pos = new vscode.Position(cursor.line, cursor.character + over);
-	textOvers.push(new TextOver(editor, pos, data));
+	decorations.push(new CharDecor(editor, pos, data));
+	if (configCursorEnabled) decorations.push(new CursorDecor(editor, pos));
 	startTimeout();
 }
 
-class TextOver {
+interface AnimatedDecor {
+	update(index: number, delta: number): boolean;
+}
+
+class CharDecor implements AnimatedDecor {
 	private readonly totalTimeMs = 400;
 	private text: string;
 	private textColor: string;
@@ -124,13 +136,9 @@ class TextOver {
 		const rColor = ColorUtils.saturated(ColorUtils.random());
 		this.textColor = ColorUtils.toHexCode(ColorUtils.desaturated(rColor, 0.6));
 		this.shadowColor = ColorUtils.toHexCode(rColor);
-		this.strokeColor = "white";
+		this.strokeColor = 'white';
 		this.ranges = [new vscode.Range(pos, pos)];
 		this.decoration = null;
-	}
-
-	public isComplete(): boolean {
-		return this.timeMs < 0;
 	}
 
 	public update(index: number, delta: number): boolean {
@@ -185,8 +193,65 @@ class TextOver {
 			},
 		);
 	}
+}
 
-	private randomColor(): vscode.Color {
-		return ColorUtils.saturated(ColorUtils.random());
+class CursorDecor implements AnimatedDecor {
+	private readonly totalTimeMs = 400;
+	private editor: vscode.TextEditor;
+	private ranges: vscode.Range[];
+	private timeMs: number = this.totalTimeMs;
+	private color: String;
+	private decoration: vscode.TextEditorDecorationType | null;
+
+	constructor(editor: vscode.TextEditor, pos: vscode.Position) {
+		this.editor = editor;
+		this.decoration = null;
+		const rColor = ColorUtils.saturated(ColorUtils.random());
+		this.color = ColorUtils.toHexCode(ColorUtils.desaturated(rColor, 0.6));
+		this.ranges = [new vscode.Range(pos, pos)];
+	}
+
+	public update(index: number, delta: number): boolean {
+		this.timeMs -= delta;
+		if (this.timeMs < 0) {
+			this.decoration?.dispose();
+			return false;
+		}
+
+		this.decoration?.dispose();
+		this.decoration = this.createDecoration(index + 1);
+		this.editor.setDecorations(this.decoration, this.ranges);
+		return true;
+	}
+
+	private createDecoration(index: number): vscode.TextEditorDecorationType {
+		const progressInv = this.timeMs / this.totalTimeMs;
+		const progress = 1 - progressInv;
+
+		const opacity = CubicCurve.ease.transform(progressInv);
+		const scale = 0.5 + CubicCurve.easeInBack.transform(progress);
+
+		const style = `
+			none;
+			position: absolute;
+			top: 0px;
+			margin-left: 0px;
+			width: 50px;
+			height: 50px;
+			z-index: ${index};
+			background: url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAMAAABEpIrGAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJUExURf///wAAAAAAAH5RqV0AAAADdFJOU///ANfKDUEAAAAJcEhZcwAADsIAAA7CARUoSoAAAABcSURBVDhP3ZMxDoAwDAMT///RGLiAqkqEgYXeFvuWNkqoIRQXRIbADEJSKwnMIWRBL8a0eArkEysJfjXzxN682EXDMkL3Ub9Y9ydCQT4dTnELBGYQqA2BsfCItAGWIwaVIuQAoAAAAABJRU5ErkJggg==');
+			background-repeat: no-repeat;
+  			background-size: 100% 100%;
+			opacity: ${opacity};
+			transform: translate(-50%, -30%) scale(${scale})`;
+
+		return vscode.window.createTextEditorDecorationType(
+			<vscode.DecorationRenderOptions>{
+				after: {
+					contentText: '',
+					textDecoration: style,
+				},
+			},
+		);
 	}
 }
