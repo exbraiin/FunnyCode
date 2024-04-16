@@ -7,7 +7,6 @@
 - Added CHANGELOG
 - Added cursor decoration _(disabled by default)_
 - Added grayscale mode _(disabled by default)_
-- Updated extension icon
 - Improvements
 
 #### [1.0.2]
