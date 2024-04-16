@@ -1,10 +1,16 @@
 import { Color } from 'vscode';
 
 export class ColorUtils {
+    private constructor() { }
+
     static random(): Color {
         return new Color(Math.random(), Math.random(), Math.random(), 1);
     }
 
+    static randomGrayscale(): Color {
+        const v = 0.25 + Math.random() / 2;
+        return new Color(v, v, v, 1);
+    }
 
     static interted(color: Color): Color {
         return new Color(1 - color.red, 1 - color.green, 1 - color.blue, color.alpha);

@@ -19,7 +19,9 @@ When you write to close to the bounds of the editor panel, the animation is out 
 
 `funnycode.enabled` can be set to `true` or `false` in order to enable or disable this extension on demand. <br> _A command can also be executed in order to change this setting. Search for "Toggle Funny Code" and it will toggle the setting on or off._
 
-`funnycode.cursor` can be set to `true` or `false` in order to enable or disable the cursor decoration.
+`funnycode.cursor` can be set to `true` or `false` in order to enable or disable the cursor decoration. <br> _The cursor is a "target" marker spawned at the cursor position._
+
+`funnycode.grayscale` can be set to `true` or `false` in order to enable or disable the grayscale mode. <br> _Grayscale mode replaces the random color or each character with a grayscale color._
 
 ## How to install
 

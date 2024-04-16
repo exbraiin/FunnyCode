@@ -40,6 +40,12 @@
             "type": "boolean",
             "default": false,
             "description": "Enables funny code \"cursor\" animation!"
+          },
+          "funnycode.grayscale": {
+            "order": 1,
+            "type": "boolean",
+            "default": false,
+            "description": "Enables funny code \"grayscale\" mode!"
           }
         }
       }

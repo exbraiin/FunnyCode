@@ -3,8 +3,13 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.ColorUtils = void 0;
 const vscode_1 = require("vscode");
 class ColorUtils {
+    constructor() { }
     static random() {
         return new vscode_1.Color(Math.random(), Math.random(), Math.random(), 1);
+    }
+    static randomGrayscale() {
+        const v = 0.25 + Math.random() / 2;
+        return new vscode_1.Color(v, v, v, 1);
     }
     static interted(color) {
         return new vscode_1.Color(1 - color.red, 1 - color.green, 1 - color.blue, color.alpha);

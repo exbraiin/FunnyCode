@@ -1,51 +1,18 @@
 import * as vscode from 'vscode';
+import { Configs } from './configs';
 import { ColorUtils } from './utils/color';
 import { CubicCurve } from './utils/cubic_curve';
 
-var configCursorEnabled: boolean = false;
-var configExtensionEnabled: boolean = false;
 var timeout: NodeJS.Timeout | null;
 var decorations: AnimatedDecor[] = [];
 var fontFamily: string = 'Verdana';
 
 // This method is called when your extension is activated
 export function activate(context: vscode.ExtensionContext) {
-	const extName = 'funnycode';
-	const cfgExtension = 'enabled';
-	const cfgCursor = 'cursor';
-
-	function isFunnyCodeConfigEnabled(config: string): boolean {
-		const cfg = vscode.workspace.getConfiguration(extName);
-		const inspect = cfg.inspect(config);
-		return !!(inspect?.globalValue ?? inspect?.defaultValue ?? false);
-	}
-
-	function toogleFunnyCode() {
-		const value = isFunnyCodeConfigEnabled(cfgExtension);
-		const config = vscode.workspace.getConfiguration(extName);
-		config.update(cfgExtension, !value, vscode.ConfigurationTarget.Global);
-		vscode.window.showInformationMessage(value ? 'Funny Code Disabled!' : 'Funny Code Enabled!');
-	}
-
-	function onFunnyCodeEnabledChanged(event: vscode.ConfigurationChangeEvent) {
-		if (event.affectsConfiguration(`${extName}.${cfgExtension}`)) {
-			configExtensionEnabled = isFunnyCodeConfigEnabled(cfgExtension);
-		}
-		if (event.affectsConfiguration(`${extName}.${cfgCursor}`)) {
-			configCursorEnabled = isFunnyCodeConfigEnabled(cfgCursor);
-		}
-	}
+	Configs.activate(context);
 
 	const config = vscode.workspace.getConfiguration('editor');
 	fontFamily = config.fontFamily;
-	configExtensionEnabled = isFunnyCodeConfigEnabled(cfgExtension);
-	configCursorEnabled = isFunnyCodeConfigEnabled(cfgCursor);
-
-	const toogleCommand = vscode.commands.registerCommand('funnycode.toggleEnable', toogleFunnyCode);
-	context.subscriptions.push(toogleCommand);
-
-	const configSub = vscode.workspace.onDidChangeConfiguration(onFunnyCodeEnabledChanged);
-	context.subscriptions.push(configSub);
 
 	const onTextChangeDisposable = vscode.workspace.onDidChangeTextDocument(onTextChanged);
 	context.subscriptions.push(onTextChangeDisposable);
@@ -84,7 +51,7 @@ function textToRender(text: string, editor: vscode.TextEditor) {
 }
 
 function onTextChanged(e: vscode.TextDocumentChangeEvent): void {
-	if (!configExtensionEnabled) return;
+	if (!Configs.isExtensionEnabled) return;
 	const editor = vscode.window.activeTextEditor;
 	if (!editor) return;
 
@@ -97,7 +64,7 @@ function onTextChanged(e: vscode.TextDocumentChangeEvent): void {
 	const over = text === '' ? 0 : 1;
 	const pos = new vscode.Position(cursor.line, cursor.character + over);
 	decorations.push(new CharDecor(editor, pos, data));
-	if (configCursorEnabled) decorations.push(new CursorDecor(editor, pos));
+	if (Configs.isCursorEnabled) decorations.push(new CursorDecor(editor, pos));
 	startTimeout();
 }
 
@@ -133,9 +100,15 @@ class CharDecor implements AnimatedDecor {
 		this.moveDist = Math.random() * 10;
 		this.moveDirX = (Math.random() - 0.5) * 2;
 		this.moveDirY = (Math.random() / 2 + 0.5) * -5;
-		const rColor = ColorUtils.saturated(ColorUtils.random());
-		this.textColor = ColorUtils.toHexCode(ColorUtils.desaturated(rColor, 0.6));
-		this.shadowColor = ColorUtils.toHexCode(rColor);
+		if (Configs.isGrayscaleEnabled) {
+			const rColor = ColorUtils.randomGrayscale();
+			this.textColor = ColorUtils.toHexCode(rColor);
+			this.shadowColor = ColorUtils.toHexCode(rColor);
+		} else {
+			const rColor = ColorUtils.saturated(ColorUtils.random());
+			this.textColor = ColorUtils.toHexCode(ColorUtils.desaturated(rColor, 0.6));
+			this.shadowColor = ColorUtils.toHexCode(rColor);
+		}
 		this.strokeColor = 'white';
 		this.ranges = [new vscode.Range(pos, pos)];
 		this.decoration = null;

@@ -25,45 +25,17 @@ var __importStar = (this && this.__importStar) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.deactivate = exports.activate = void 0;
 const vscode = __importStar(require("vscode"));
+const configs_1 = require("./configs");
 const color_1 = require("./utils/color");
 const cubic_curve_1 = require("./utils/cubic_curve");
-var configCursorEnabled = false;
-var configExtensionEnabled = false;
 var timeout;
 var decorations = [];
 var fontFamily = 'Verdana';
 // This method is called when your extension is activated
 function activate(context) {
-    const extName = 'funnycode';
-    const cfgExtension = 'enabled';
-    const cfgCursor = 'cursor';
-    function isFunnyCodeConfigEnabled(config) {
-        const cfg = vscode.workspace.getConfiguration(extName);
-        const inspect = cfg.inspect(config);
-        return !!(inspect?.globalValue ?? inspect?.defaultValue ?? false);
-    }
-    function toogleFunnyCode() {
-        const value = isFunnyCodeConfigEnabled(cfgExtension);
-        const config = vscode.workspace.getConfiguration(extName);
-        config.update(cfgExtension, !value, vscode.ConfigurationTarget.Global);
-        vscode.window.showInformationMessage(value ? 'Funny Code Disabled!' : 'Funny Code Enabled!');
-    }
-    function onFunnyCodeEnabledChanged(event) {
-        if (event.affectsConfiguration(`${extName}.${cfgExtension}`)) {
-            configExtensionEnabled = isFunnyCodeConfigEnabled(cfgExtension);
-        }
-        if (event.affectsConfiguration(`${extName}.${cfgCursor}`)) {
-            configCursorEnabled = isFunnyCodeConfigEnabled(cfgCursor);
-        }
-    }
+    configs_1.Configs.activate(context);
     const config = vscode.workspace.getConfiguration('editor');
     fontFamily = config.fontFamily;
-    configExtensionEnabled = isFunnyCodeConfigEnabled(cfgExtension);
-    configCursorEnabled = isFunnyCodeConfigEnabled(cfgCursor);
-    const toogleCommand = vscode.commands.registerCommand('funnycode.toggleEnable', toogleFunnyCode);
-    context.subscriptions.push(toogleCommand);
-    const configSub = vscode.workspace.onDidChangeConfiguration(onFunnyCodeEnabledChanged);
-    context.subscriptions.push(configSub);
     const onTextChangeDisposable = vscode.workspace.onDidChangeTextDocument(onTextChanged);
     context.subscriptions.push(onTextChangeDisposable);
 }
@@ -106,7 +78,7 @@ function textToRender(text, editor) {
     return text.toUpperCase();
 }
 function onTextChanged(e) {
-    if (!configExtensionEnabled)
+    if (!configs_1.Configs.isExtensionEnabled)
         return;
     const editor = vscode.window.activeTextEditor;
     if (!editor)
@@ -121,7 +93,7 @@ function onTextChanged(e) {
     const over = text === '' ? 0 : 1;
     const pos = new vscode.Position(cursor.line, cursor.character + over);
     decorations.push(new CharDecor(editor, pos, data));
-    if (configCursorEnabled)
+    if (configs_1.Configs.isCursorEnabled)
         decorations.push(new CursorDecor(editor, pos));
     startTimeout();
 }
@@ -152,9 +124,16 @@ class CharDecor {
         this.moveDist = Math.random() * 10;
         this.moveDirX = (Math.random() - 0.5) * 2;
         this.moveDirY = (Math.random() / 2 + 0.5) * -5;
-        const rColor = color_1.ColorUtils.saturated(color_1.ColorUtils.random());
-        this.textColor = color_1.ColorUtils.toHexCode(color_1.ColorUtils.desaturated(rColor, 0.6));
-        this.shadowColor = color_1.ColorUtils.toHexCode(rColor);
+        if (configs_1.Configs.isGrayscaleEnabled) {
+            const rColor = color_1.ColorUtils.randomGrayscale();
+            this.textColor = color_1.ColorUtils.toHexCode(rColor);
+            this.shadowColor = color_1.ColorUtils.toHexCode(rColor);
+        }
+        else {
+            const rColor = color_1.ColorUtils.saturated(color_1.ColorUtils.random());
+            this.textColor = color_1.ColorUtils.toHexCode(color_1.ColorUtils.desaturated(rColor, 0.6));
+            this.shadowColor = color_1.ColorUtils.toHexCode(rColor);
+        }
         this.strokeColor = 'white';
         this.ranges = [new vscode.Range(pos, pos)];
         this.decoration = null;

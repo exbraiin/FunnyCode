@@ -6,6 +6,7 @@
 
 - Added CHANGELOG
 - Added cursor decoration _(disabled by default)_
+- Added grayscale mode _(disabled by default)_
 - Improvements
 
 #### [1.0.2]
