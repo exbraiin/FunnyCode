@@ -1,9 +1,17 @@
 # Change Log
 
-All notable changes to the "cenas" extension will be documented in this file.
+## Release Notes
 
-Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how to structure this file.
+#### [1.0.3]
 
-## [Unreleased]
+- Added CHANGELOG
+- Added cursor decoration _(disabled by default)_
+- Improvements
+
+#### [1.0.2]
+
+- Updated README
+
+#### [1.0.1]
 
 - Initial release

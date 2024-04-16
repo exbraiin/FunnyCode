@@ -13,18 +13,17 @@ Here is a little example of how it looks when you write your code in the editor.
 
 ## Known Issues
 
-When you write to close to the bounds of the editor panel, the animation is out of bounds, so you won't see it. _However in most cases you'll be writing your code in the middle of the editor, so I didn't care much about fixing it._
+When you write to close to the bounds of the editor panel, the animation is out of bounds, so you won't see it. <br> _However in most cases you'll be writing your code in the middle of the editor, so I didn't care much about fixing it._
 
 ## Extension Settings
 
-`funnycode.enabled` can be set to `true` or `false` in order to disable this extension on demand.<br>
+`funnycode.enabled` can be set to `true` or `false` in order to enable or disable this extension on demand. <br> _A command can also be executed in order to change this setting. Search for "Toggle Funny Code" and it will toggle the setting on or off._
 
-A command can also be executed in order to change this setting. Search for "Toggle Funny Code" and it will toggle the setting on or off.
+`funnycode.cursor` can be set to `true` or `false` in order to enable or disable the cursor decoration.
 
 ## How to install
 
-1. You can download a [VSIX Release](releases/) file and install it through the extensions panel.<br>
-Press the options button ("...") and click "Install from VSIX".
+1. You can download a [VSIX Release](releases/) file and install it through the extensions panel. <br> Press the options button ("...") and click "Install from VSIX".
 
 2. You can also check the [Marketplace](https://marketplace.visualstudio.com/items?itemName=ExBrain.funnycode) for this extension
 
