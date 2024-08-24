@@ -6,6 +6,7 @@ import { CubicCurve } from './utils/cubic_curve';
 var timeout: NodeJS.Timeout | null;
 var decorations: AnimatedDecor[] = [];
 var fontFamily: string = 'Verdana';
+var lastCursor: vscode.Position | undefined;
 
 // This method is called when your extension is activated
 export function activate(context: vscode.ExtensionContext) {
@@ -59,6 +60,8 @@ function onTextChanged(e: vscode.TextDocumentChangeEvent): void {
 	const text = e.contentChanges[0].text;
 	const cursor = editor.selection.active;
 	if (!cursor) return;
+	if (lastCursor != undefined && cursor.isEqual(lastCursor)) return;
+	lastCursor = cursor;
 
 	const data = textToRender(text, editor);
 	const over = text === '' ? 0 : 1;

@@ -2,6 +2,10 @@
 
 ## Release Notes
 
+#### [1.0.4]
+
+- Fix no animation execution if cursor does not move.
+
 #### [1.0.3]
 
 - Added CHANGELOG

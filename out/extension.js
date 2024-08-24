@@ -31,6 +31,7 @@ const cubic_curve_1 = require("./utils/cubic_curve");
 var timeout;
 var decorations = [];
 var fontFamily = 'Verdana';
+var lastCursor;
 // This method is called when your extension is activated
 function activate(context) {
     configs_1.Configs.activate(context);
@@ -89,6 +90,9 @@ function onTextChanged(e) {
     const cursor = editor.selection.active;
     if (!cursor)
         return;
+    if (lastCursor != undefined && cursor.isEqual(lastCursor))
+        return;
+    lastCursor = cursor;
     const data = textToRender(text, editor);
     const over = text === '' ? 0 : 1;
     const pos = new vscode.Position(cursor.line, cursor.character + over);
