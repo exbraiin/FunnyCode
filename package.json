@@ -4,15 +4,15 @@
   "description": "Adds a little decoration above the written text.",
   "publisher": "ExBrain",
   "icon": "images/icon.jpg",
-  "version": "1.0.5",
+  "version": "1.0.6",
   "repository": {
     "url": "https://github.com/exbraiin/FunnyCode"
   },
   "engines": {
-    "vscode": "^1.84.0"
+    "vscode": "^1.110.0"
   },
   "categories": [
-    "Themes"
+    "Other"
   ],
   "activationEvents": [
     "onStartupFinished"
@@ -42,7 +42,7 @@
             "description": "Enables funny code \"cursor\" animation!"
           },
           "funnycode.grayscale": {
-            "order": 1,
+            "order": 2,
             "type": "boolean",
             "default": false,
             "description": "Enables funny code \"grayscale\" mode!"
@@ -59,16 +59,21 @@
     "lint": "eslint src --ext ts",
     "test": "node ./out/test/runTest.js"
   },
-  "dependencies": {
+  "devDependencies": {
     "@types/mocha": "^10.0.10",
     "@types/node": "^25.5.0",
     "@types/vscode": "^1.110.0",
     "@typescript-eslint/eslint-plugin": "^8.57.1",
     "@typescript-eslint/parser": "^8.57.1",
     "@vscode/test-electron": "^2.5.2",
+    "@vscode/vsce": "^3.9.2",
     "eslint": "^10.0.3",
     "glob": "^13.0.6",
     "mocha": "^11.7.5",
     "typescript": "^5.9.3"
+  },
+  "overrides": {
+    "diff": "^9.0.0",
+    "serialize-javascript": "^7.1.0"
   }
 }
